@@ -1,0 +1,87 @@
+
+
+{%- assign variant = product.selected_or_first_available_variant -%}
+
+{% if variant.available == false %}
+  <!-- Restock Notification Mount Point -->
+  <div
+    id="restock-subscribe-root"
+    data-product-id="{{ product.id }}"
+    data-variant-id="{{ variant.id }}"
+    data-shop-name="{{ shop.domain }}"
+    class="restock-subscribe-container"
+  >
+    {% comment %} Testing-{{ product.id }} {% endcomment %}
+    <form class="restock-subscribe-form" id="restock-subscribe-form">
+      <input type="email" name="email" id="notify-email" autocomplete="off"  placeholder="Enter your email" required>
+      <button id="notify-button">Notify Me</button>
+    </form>
+
+    <p id="notify-message" class="notify-message"></p>
+  </div>
+
+  <!-- Load React UI script -->
+  <script src="{{ 'subscribe.js' | asset_url }}" type="text/javascript" defer></script>
+  {% comment %} <script src="https://your-app.com/public/subscribe.js" defer></script> {% endcomment %}
+{% endif %}
+
+<style>
+  .restock-subscribe-container,  {
+    margin-top: 20px;
+    padding: 10px;
+    {% comment %} border: 1px solid #ccc; {% endcomment %}
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .restock-subscribe-container .notify-message {
+    display:none;
+    color:green;
+    margin-top:10px;
+    text-align:center;
+  }
+  
+  .restock-subscribe-container form {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    display:none;
+  }
+
+  .restock-subscribe-container input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .restock-subscribe-container input[type="email"]:focus {
+    border-color: #007bff;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  .restock-subscribe-container button {
+    padding: 10px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Back In Stock Subscribe",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
