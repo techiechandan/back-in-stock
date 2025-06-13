@@ -3,7 +3,7 @@
 client_id = "ab61baa9a51936f91b3172926778db6f"
 name = "notify-me"
 handle = "notify-me-40"
-application_url = "https://trunk-hop-writers-ira.trycloudflare.com"
+application_url = "https://april-mass-custom-easter.trycloudflare.com"
 embedded = true
 
 [build]
@@ -27,9 +27,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://trunk-hop-writers-ira.trycloudflare.com/auth/callback",
-  "https://trunk-hop-writers-ira.trycloudflare.com/auth/shopify/callback",
-  "https://trunk-hop-writers-ira.trycloudflare.com/api/auth/callback"
+  "https://april-mass-custom-easter.trycloudflare.com/auth/callback",
+  "https://april-mass-custom-easter.trycloudflare.com/auth/shopify/callback",
+  "https://april-mass-custom-easter.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

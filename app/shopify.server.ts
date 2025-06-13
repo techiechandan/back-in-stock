@@ -19,15 +19,9 @@ const shopify = shopifyApp({
   distribution: AppDistribution.AppStore,
 
   webhooks: {
-    PRODUCTS_UPDATE: {
+    VARIANTS_IN_STOCK: {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: `/webhooks/products/update`,
-      callback: async (topic, shop, body, webhookId) => {
-        console.log("--- Product update ---");
-        const payload = JSON.parse(body);
-        console.log(payload);
-        console.log("--- /Product update ---");
-      },
     },
   },
   hooks: {

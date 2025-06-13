@@ -1,48 +1,61 @@
 import { ActionFunctionArgs } from "@remix-run/node";
 import prisma from "../db.server";
 import { cors } from "remix-utils/cors";
-
+import {authenticate} from "../shopify.server"
 
 export const loader = async ({ request }: ActionFunctionArgs) => {
   try {
+    console.log("request coming from theme extension");
     const url = new URL(request.url);
     const productId = url.searchParams.get("productId");
     const variantId = url.searchParams.get("variantId");
+    const actionType = url.searchParams.get("actionType");
 
-    // if (request.method === "OPTIONS") {
-    //   return cors(
-    //     request,
-    //     new Response(null, {
-    //       status: 204,
-    //       headers: {
-    //         "Access-Control-Allow-Origin": "*",
-    //         "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    //         "Access-Control-Allow-Headers": "Content-Type",
-    //       },
-    //     }),
-    //   );
-    // }
     if (request.method === "OPTIONS") {
-    return cors(request, new Response(null, { status: 204 }));
-  }
+      return cors(request, new Response(null, { status: 204 }));
+    }
 
-    const isSubscribed = await prisma.subscription.findFirst({
-      where: {
-        productId: productId!,
-        variantId: variantId!,
-      },
-    });
+    switch (actionType?.toLowerCase()) {
+      case "subscription_status":
+        const isSubscribed = await prisma.subscription.findFirst({
+          where: {
+            productId: productId!,
+            variantId: variantId!,
+          },
+        });
 
-    return cors(
-      request,
-      new Response(
-        JSON.stringify({
-          message: "Subscription details loaded successfully",
-          isSubscribed: !!isSubscribed,
-        }),
-        { status: 200 },
-      ),
-    );
+        return cors(
+          request,
+          new Response(
+            JSON.stringify({
+              message: "Subscription details loaded successfully",
+              isSubscribed: !!isSubscribed,
+            }),
+            { status: 200 },
+          ),
+        );
+      case "stock_status":
+
+        return cors(
+          request,
+          new Response(
+            JSON.stringify({
+              message: "Stock details loaded successfully",
+            }),
+            { status: 200 },
+          ),
+        )
+      default:
+        return cors(
+          request,
+          new Response(
+            JSON.stringify({
+              message: "Invalid action type",
+            }),
+            { status: 400 },
+          ),
+        );
+    }
   } catch (error) {
     console.error("Error in loader:", error);
     return cors(
@@ -98,9 +111,15 @@ export async function action({ request }: { request: Request }) {
 
     return cors(
       request,
-      new Response(JSON.stringify({ message: "Thank you for subscribing!",success: true }), {
-        status: 200,
-      }),
+      new Response(
+        JSON.stringify({
+          message: "Thank you for subscribing!",
+          success: true,
+        }),
+        {
+          status: 200,
+        },
+      ),
     );
   } catch (error) {
     console.error("Error saving subscription details:", error);

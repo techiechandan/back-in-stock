@@ -2,7 +2,7 @@ import { ActionFunctionArgs, redirect } from "@remix-run/node";
 import prisma from "../../db.server";
 import { fetchProductsByVariantIds } from "./loader";
 import { authenticate } from "../../shopify.server";
-import sendMail from "../services/sendMail";
+import sendMail from "../utils/sendMail";
 
 
 

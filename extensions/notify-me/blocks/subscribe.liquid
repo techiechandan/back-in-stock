@@ -1,81 +1,219 @@
-
-
 {%- assign variant = product.selected_or_first_available_variant -%}
-
-{% if variant.available == false %}
-  <!-- Restock Notification Mount Point -->
   <div
-    id="restock-subscribe-root"
+    id="notify-me-subscribe-root"
     data-product-id="{{ product.id }}"
     data-variant-id="{{ variant.id }}"
     data-shop-name="{{ shop.domain }}"
-    class="restock-subscribe-container"
+    class="notify-me-subscribe-root"
   >
-    {% comment %} Testing-{{ product.id }} {% endcomment %}
-    <form class="restock-subscribe-form" id="restock-subscribe-form">
-      <input type="email" name="email" id="notify-email" autocomplete="off"  placeholder="Enter your email" required>
-      <button id="notify-button">Notify Me</button>
-    </form>
-
-    <p id="notify-message" class="notify-message"></p>
+    <button id="notify-me-subscribe-root-button" onclick="openModal()">Notify Me </button>
   </div>
 
-  <!-- Load React UI script -->
-  <script src="{{ 'subscribe.js' | asset_url }}" type="text/javascript" defer></script>
-  {% comment %} <script src="https://your-app.com/public/subscribe.js" defer></script> {% endcomment %}
-{% endif %}
+  {% comment %} Overlay Element {% endcomment %}
+  <div class="notify_me-modal-overlay" id="notifyModal">
+    <div class="notify_me-modal-content">
+      <button class="notify_me-close-btn" onclick="closeModal()">×</button>
+      <h2>NOTIFY ME WHEN AVAILABLE</h2>
+      <hr>
+      <p>We'll notify you when this product is back in stock.</p>
+      <div class="notify_me-product-name">{{ product.title }}</div>
+
+      <form id="notify-me-form">
+        <input type="email" name="email" placeholder="Email address" required oninput="hideMessage()" >
+        <button type="submit" id="notify-me-form-submit-button" >Notify me when available</button>
+      </form>
+
+      <p id="notify-message" class="notify-message"> </p>
+
+      <p class="notify_me-footer-text">
+        We don't share your information with others. <br>
+        Powered by <a href="#">Back in Stock</a>
+      </p>
+    </div>
+  </div>
+
+<script>
+  // Make variant inventory data available to JavaScript
+  window.productVariants = {
+    {% for variant in product.variants %}
+      {{ variant.id }}: {
+        available: {{ variant.available | json }},
+        inventory_quantity: {{ variant.inventory_quantity | json }}
+      }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  };
+</script>
+
+<script src="{{ 'subscribe.js' | asset_url }}" type="text/javascript" defer></script>
+{% comment %} <script src="https://your-app.com/public/subscribe.js" defer></script> {% endcomment %}
 
 <style>
-  .restock-subscribe-container,  {
-    margin-top: 20px;
-    padding: 10px;
-    {% comment %} border: 1px solid #ccc; {% endcomment %}
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
+    .notify-me-subscribe-root,  {
+      {% comment %} margin-top: 10px; {% endcomment %}
+      padding: 10px;
+      {% comment %} border: 1px solid #ccc; {% endcomment %}
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
 
-  .restock-subscribe-container .notify-message {
-    display:none;
-    color:green;
-    margin-top:10px;
-    text-align:center;
-  }
-  
-  .restock-subscribe-container form {
-    width: 100%;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    display:none;
-  }
+    .notify-me-subscribe-root button{
+      padding: 15px;
+      width: 100%;
+      background: cornflowerblue;
+      border: none;
+      color: black;
+      text-transform: capitalize;
+      font-size: 1.5rem;
+      letter-spacing: .1rem
+      font-weight: lighter;
+      font-family: inherit;
+      cursor: pointer;
+      display:{% if variant.available %} none {% else %} block {% endif %};
+    }
 
-  .restock-subscribe-container input[type="email"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
+    {% comment %} Overlay Element Style {% endcomment %}
 
-  .restock-subscribe-container input[type="email"]:focus {
-    border-color: #007bff;
-    box-shadow: none !important;
-    outline: none !important;
-  }
+  .notify_me-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
 
-  .restock-subscribe-container button {
-    padding: 10px 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-  }
+      .notify_me-modal-content {
+        background-color: #fff;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        padding: 30px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .notify_me-modal-content h2 {
+        margin-top: 0;
+        font-size: 22px;
+        font-weight: 600;
+      }
+
+      .notify_me-modal-content hr {
+        border: none;
+        border-top: 1px solid #eee;
+        margin: 15px 0;
+      }
+
+      .notify_me-modal-content p {
+        margin: 10px 0;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .notify_me-product-name {
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .notify_me-modal-content input[type="text"],
+      .notify_me-modal-content input[type="email"] {
+        width: 95%;
+        padding: 12px;
+        margin: 15px 0;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .notify_me-modal-content button[type="submit"] {
+        width: 100%;
+        padding: 14px;
+        background-color: black;
+        color: white;
+        font-weight: bold;
+        font-size: 15px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .notify_me-modal-content button[type="submit"]:hover {
+        background-color: #222;
+      }
+      .notify_me-modal-content button[type="submit"].disabled {
+        background-color: #222;
+      }
+
+      .notify_me-footer-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 25px !important;
+      }
+
+      .notify_me-footer-text a {
+        color: #000;
+        text-decoration: underline;
+      }
+
+      .notify_me-close-btn {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        font-size: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+
+      .notify-message{
+        margin:10px 0;
+        padding: 10px;
+      }
+
+
+    {% comment %} .notify-me-subscribe-root .notify-message {
+      display:none;
+      color:green;
+      margin-top:10px;
+      text-align:center;
+    }
+
+    .notify-me-subscribe-root form {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      display:none;
+    }
+
+    .notify-me-subscribe-root input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .notify-me-subscribe-root input[type="email"]:focus {
+      border-color: #007bff;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    .notify-me-subscribe-root button {
+      padding: 10px 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    } {% endcomment %}
 </style>
 
 {% schema %}

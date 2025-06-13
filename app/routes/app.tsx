@@ -33,9 +33,6 @@ export default function App() {
         <Link to="/app/subscribe">
           Pending Emails
         </Link>
-        <Link to="/app/sendmail">
-          Send Email
-        </Link>
         <Link to="/app/additional">Additional page</Link>
       </NavMenu>
       <Outlet />
