@@ -1,4 +1,4 @@
-const baseURL = `https://kuwait-enjoy-rocket-usually.trycloudflare.com`;
+const baseURL = `https://badly-listprice-elementary-warnings.trycloudflare.com`;
 /**
  * Opens the Notify Me modal by appending it to the body if necessary and making it visible.
  * Ensures the modal element is added directly to the body for correct styling and display.
@@ -48,8 +48,6 @@ function hideMessage() {
   document.getElementById("notify-message").style.display = "none";
 }
 
-
-
 /**
  * Shows a message in the Notify Me modal with a specified type and duration
  * @param {string} message - The message to show
@@ -65,8 +63,7 @@ function showMessage(message = "", type = "success", duration = 0) {
     messageElement.innerText = message;
     messageElement.style.display = "block";
   }, duration);
-};
-
+}
 
 /**
  * Toggles the enable/disable state of the "Notify Me" button.
@@ -110,6 +107,14 @@ async function updateNotifyMeWidget(vId) {
     document.getElementById("notify-me-subscribe-root-button").style.display =
       "none";
   }
+
+  /**
+   * updating the data-variant-id attribute of the container element
+   * with the selected variant ID
+   */
+  const contianerElement = document.getElementById("notify-me-subscribe-root");
+
+  contianerElement.setAttribute("data-variant-id", vId);
 }
 
 /**
@@ -123,22 +128,25 @@ async function updateNotifyMeWidget(vId) {
 async function isSubscribed(productId, variantId, shopName, email, actionType) {
   try {
     const response = await fetch(
-    `${baseURL}/api/subscribe?productId=${productId}&variantId=${variantId}&shopName=${shopName}&email=${email}&actionType=${actionType}`.replaceAll(" ",""),
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
+      `${baseURL}/api/subscribe?productId=${productId}&variantId=${variantId}&shopName=${shopName}&email=${email}&actionType=${actionType}`.replaceAll(
+        " ",
+        "",
+      ),
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
       },
-    },
-  );
+    );
 
-  return await response.json();
+    return await response.json();
   } catch (error) {
     console.error("Error checking subscription status:", error);
-    throw new Error(error?.message||"Failed to check subscription status");
+    throw new Error(error?.message || "Failed to check subscription status");
   }
-};
+}
 
 /**
  * Saves the subscription details to the database
@@ -147,17 +155,17 @@ async function isSubscribed(productId, variantId, shopName, email, actionType) {
 async function saveSubscriptionDetails(formData) {
   try {
     const response = await fetch(`${baseURL}/api/subscribe`, {
-    method: "POST",
-    body: formData,
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  });
-  
-  return await response.json();
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+
+    return await response.json();
   } catch (error) {
     console.error("Error saving subscription details:", error);
-    throw new Error(error.message|| "Failed to save subscription details");
+    throw new Error(error.message || "Failed to save subscription details");
   }
 }
 
@@ -202,15 +210,15 @@ async function formSubmitHandler(event) {
     if (res.isSubscribed) {
       showMessage("Already subscribed", "error", 0);
       return;
-    };
+    }
 
-    if(!res.isSubscribed) {
+    if (!res.isSubscribed) {
       const res = await saveSubscriptionDetails(formData);
-      showMessage(res?.message||"Subscribed successfully", "success", 0);
+      showMessage(res?.message || "Subscribed successfully", "success", 0);
       return;
     }
   } catch (error) {
-    showMessage(error?.message||"Subscription failed", "error", 0);
+    showMessage(error?.message || "Subscription failed", "error", 0);
     console.error("Error while subscribing", error);
   } finally {
     setTimeout(() => {
