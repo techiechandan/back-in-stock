@@ -1,4 +1,9 @@
-const baseURL = `https://april-mass-custom-easter.trycloudflare.com`;
+const baseURL = `https://kuwait-enjoy-rocket-usually.trycloudflare.com`;
+/**
+ * Opens the Notify Me modal by appending it to the body if necessary and making it visible.
+ * Ensures the modal element is added directly to the body for correct styling and display.
+ * If the modal element is not found, the function exits early.
+ */
 function openModal() {
   /**
    * selecting the modal element
@@ -21,6 +26,10 @@ function openModal() {
   modal.style.display = "flex";
 }
 
+/**
+ * Closes the Notify Me modal and clears the email input.
+ * Hides the message element in the modal by calling `hideMessage()`.
+ */
 function closeModal() {
   document.getElementById("notifyModal").style.display = "none";
   document.getElementsByName("email")[0].value = "";
@@ -28,10 +37,42 @@ function closeModal() {
   hideMessage();
 }
 
+/**
+ * Hides the message element in the Notify Me modal by setting its display style to "none".
+ */
+
+/**
+ * Hides the message element in the Notify Me modal by setting its display style to "none"
+ */
 function hideMessage() {
   document.getElementById("notify-message").style.display = "none";
 }
 
+
+
+/**
+ * Shows a message in the Notify Me modal with a specified type and duration
+ * @param {string} message - The message to show
+ * @param {"success"|"error"} type - The type of message, defaults to "success"
+ * @param {number} duration - The duration in milliseconds to show the message, defaults to 0
+ */
+function showMessage(message = "", type = "success", duration = 0) {
+  const messageElement = document.getElementById("notify-message");
+
+  setTimeout(() => {
+    messageElement.style.color =
+      type.toLowerCase() === "success" ? "green" : "red";
+    messageElement.innerText = message;
+    messageElement.style.display = "block";
+  }, duration);
+};
+
+
+/**
+ * Toggles the enable/disable state of the "Notify Me" button.
+ * Adds or removes the "disabled" class and adjusts the button's disabled attribute accordingly.
+ * If the button is currently disabled, it will be enabled; otherwise, it will be disabled.
+ */
 function toggleNotifyMeButtonEnableDisable() {
   const notifyMeButton = document.getElementById(
     "notify-me-form-submit-button",
@@ -45,6 +86,14 @@ function toggleNotifyMeButtonEnableDisable() {
   }
 }
 
+/**
+ * Updates the visibility of the "Notify Me" button based on the availability
+ * of the selected product variant. Fetches variant details using the provided
+ * variant ID from a global variable and modifies the button's display style
+ * accordingly.
+ *
+ * @param {string} vId - The ID of the selected product variant.
+ */
 async function updateNotifyMeWidget(vId) {
   /**
    * fetching the variantDetails of selected variant, from global variable
@@ -64,16 +113,17 @@ async function updateNotifyMeWidget(vId) {
 }
 
 /**
- *
+ * Checks if the user is already subscribed to the product
  * @param {*} productId normalized product id
  * @param {*} variantId normalized variant id
  * @param {*} shopName  name of the store
  * @param {*} actionType name of the action
  * @returns an object with isSubscribed property, true if the user is subscribed
  */
-async function isSubscribed(productId, variantId, shopName, actionType) {
-  const response = await fetch(
-    `${baseURL}/api/subscribe?productId=${productId}&variantId=${variantId}&shopName=${shopName}&actionType=${actionType}`,
+async function isSubscribed(productId, variantId, shopName, email, actionType) {
+  try {
+    const response = await fetch(
+    `${baseURL}/api/subscribe?productId=${productId}&variantId=${variantId}&shopName=${shopName}&email=${email}&actionType=${actionType}`.replaceAll(" ",""),
     {
       method: "GET",
       headers: {
@@ -83,40 +133,46 @@ async function isSubscribed(productId, variantId, shopName, actionType) {
     },
   );
 
-  if (!response.ok) {
-    return {
-      isSubscribed: false,
-    };
-  }
   return await response.json();
-}
+  } catch (error) {
+    console.error("Error checking subscription status:", error);
+    throw new Error(error?.message||"Failed to check subscription status");
+  }
+};
 
 /**
- *
+ * Saves the subscription details to the database
  * @param {*} formData this formData contains productId, variantId, email, shopName
  */
 async function saveSubscriptionDetails(formData) {
-  const response = await fetch(`${baseURL}/api/subscribe`, {
+  try {
+    const response = await fetch(`${baseURL}/api/subscribe`, {
     method: "POST",
     body: formData,
     headers: {
       "X-Requested-With": "XMLHttpRequest",
     },
   });
-  if (!response.ok) {
-    throw new Error("Network response was not ok");
-  }
-  const data = await response.json();
-  const messageElement = document.getElementById("notify-message");
-  const formElement = document.getElementById("restock-subscribe-form");
-
-  if (data.success) {
-    alert(`${data.message || "Subscription successful"}`);
-  } else {
-    // alert(`${data.message || "Subscription failed"}`);
+  
+  return await response.json();
+  } catch (error) {
+    console.error("Error saving subscription details:", error);
+    throw new Error(error.message|| "Failed to save subscription details");
   }
 }
 
+/**
+ * Handles the submission of the notify me form
+ * Prevents the default form submission
+ * Fetches the product id, variant id, and shop name from the form container element
+ * Checks if the user is already subscribed to the product
+ * If yes, shows an error message
+ * If not, saves the subscription details to the database
+ * Shows a success message
+ * If there is an error, shows an error message
+ * Finally, enables the notify me button after 300ms
+ * @param {Event} event - The event object
+ */
 async function formSubmitHandler(event) {
   try {
     event.preventDefault();
@@ -124,8 +180,6 @@ async function formSubmitHandler(event) {
     const contianerElement = document.getElementById(
       "notify-me-subscribe-root",
     );
-
-    const messageElement = document.getElementById("notify-message");
 
     const shopName = contianerElement.getAttribute("data-shop-name");
     const productId = contianerElement.getAttribute("data-product-id");
@@ -135,36 +189,38 @@ async function formSubmitHandler(event) {
     formData.set("productId", productId);
     formData.set("variantId", variantId);
     formData.set("shopName", shopName);
-    // formData.set("email", formData.get("email"));
-    // formData.set("actionType", "stock_status");
 
     toggleNotifyMeButtonEnableDisable();
     const res = await isSubscribed(
       productId,
       variantId,
       shopName,
+      formData.get("email"),
       "subscription_status",
     );
 
     if (res.isSubscribed) {
-      messageElement.style.color = "red";
-      messageElement.innerText = "You have already subscribed";
-      messageElement.style.display = "block";
+      showMessage("Already subscribed", "error", 0);
       return;
-    } else {
-      await saveSubscriptionDetails(formData);
+    };
+
+    if(!res.isSubscribed) {
+      const res = await saveSubscriptionDetails(formData);
+      showMessage(res?.message||"Subscribed successfully", "success", 0);
+      return;
     }
   } catch (error) {
-    console.error("Error while subscribing",error)
+    showMessage(error?.message||"Subscription failed", "error", 0);
+    console.error("Error while subscribing", error);
   } finally {
-    setTimeout(()=>{
+    setTimeout(() => {
       toggleNotifyMeButtonEnableDisable();
-    },300);
+    }, 300);
   }
 }
 
 /**
- * Event Listeners
+ * Event Listeners, when the DOM is loaded
  */
 document.addEventListener("DOMContentLoaded", async () => {
   /**

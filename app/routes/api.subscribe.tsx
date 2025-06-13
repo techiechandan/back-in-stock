@@ -5,12 +5,16 @@ import {authenticate} from "../shopify.server"
 
 export const loader = async ({ request }: ActionFunctionArgs) => {
   try {
-    console.log("request coming from theme extension");
     const url = new URL(request.url);
-    const productId = url.searchParams.get("productId");
-    const variantId = url.searchParams.get("variantId");
-    const actionType = url.searchParams.get("actionType");
+    const productId = url.searchParams.get("productId")?.trim();
+    const variantId = url.searchParams.get("variantId")?.trim();
+    const email = url.searchParams.get("email")?.trim();
+    const shopName = url.searchParams.get("shopName")?.trim();
+    const actionType = url.searchParams.get("actionType")?.trim();
 
+    /**
+     * CORS preflight request handling
+     */
     if (request.method === "OPTIONS") {
       return cors(request, new Response(null, { status: 204 }));
     }
@@ -21,6 +25,8 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
           where: {
             productId: productId!,
             variantId: variantId!,
+            email: email!,
+            shop: shopName!,
           },
         });
 
@@ -34,17 +40,6 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
             { status: 200 },
           ),
         );
-      case "stock_status":
-
-        return cors(
-          request,
-          new Response(
-            JSON.stringify({
-              message: "Stock details loaded successfully",
-            }),
-            { status: 200 },
-          ),
-        )
       default:
         return cors(
           request,
@@ -85,30 +80,22 @@ export async function action({ request }: { request: Request }) {
     if (!shop || !productId || !variantId || !email) {
       return cors(
         request,
-        new Response("Missing required fields", { status: 400 }),
+        new Response(JSON.stringify({ message: "Missing required fields" }), { status: 400 }),
       );
     }
 
-    // insert data
-    await prisma.subscription.upsert({
-      where: {
-        product_variant_unique: {
-          productId,
-          variantId,
-        },
-      },
-      update: {
-        email,
-        shop,
-      },
-      create: {
+    /**
+     * saving subscription details, if it doesn't exist
+     */
+    await prisma.subscription.create({
+      data: {
         productId,
         variantId,
         email,
         shop,
       },
     });
-
+    
     return cors(
       request,
       new Response(
@@ -131,10 +118,4 @@ export async function action({ request }: { request: Request }) {
       ),
     );
   }
-}
-
-async function saveSubscriptionDetails(shop: string, accessToken: string) {
-  // This function should implement the logic to save the subscription details
-  // to your database. This is a placeholder function.
-  // You can use any database of your choice, such as MongoDB, PostgreSQL, etc.
-}
+};

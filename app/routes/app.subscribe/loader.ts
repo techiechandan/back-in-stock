@@ -1,8 +1,6 @@
 import prisma from "../../db.server";
 
 export const loader = async () => {
-  // This is where you would fetch data for the page, if needed.
-  // For this example, we are not fetching any data.
   const res = await prisma.subscription.findMany({
     where: {
       notified: false,

@@ -34,4 +34,4 @@ CREATE TABLE "Subscription" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Subscription_productId_variantId_key" ON "Subscription"("productId", "variantId");
+CREATE UNIQUE INDEX "Subscription_productId_variantId_email_shop_key" ON "Subscription"("productId", "variantId", "email", "shop");

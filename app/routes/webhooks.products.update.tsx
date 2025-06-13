@@ -36,8 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     /**
      * authenticating the incoming webhook request and extracting payload and admin.
      */
-    const { payload, admin } =
-      await authenticate.webhook(request);
+    const { payload, admin } = await authenticate.webhook(request);
 
     /**
      * extracting required field from payload
@@ -60,25 +59,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const { product } = productsDetails[0];
 
     /**
+     * fetching store details, to get primary domain of the respective store.
+     */
+    const storeDetails = await fetchStoreDetails(admin);
+
+    /**
      * fetching emailId form subscriptions table by variant_id and product_id, if anyone has subscribed for this variant and email has not been sent.
      */
-    const subscriptionRecord = await prisma.subscription.findUnique({
+    const subscriptionRecord = await prisma.subscription.findMany({
       where: {
-        product_variant_unique: {
-          productId: String(product_id),
-          variantId: String(variant_id),
-        },
+        productId: String(product_id),
+        variantId: String(variant_id),
+        shop: storeDetails?.name,
         notified: false,
       },
       select: {
         email: true,
       },
     });
-
-    /**
-     * fetching store details, to get primary domain of the respective store.
-     */
-    const storeDetails = await fetchStoreDetails(admin);
 
     /**
      * building the variant url for current product variant.
@@ -92,7 +90,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     /**
      * returing with fake ok(200) response if subscription record not found for the current variant
      */
-    if (!subscriptionRecord?.email)
+    if (!subscriptionRecord?.length)
       return new Response(
         JSON.stringify({ message: "Subcription not found for this variant" }),
         {
@@ -103,32 +101,31 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     /**
      * sending mail
      */
-    console.log("Sending mail...",subscriptionRecord.email,
-      product.title,
-      variant_title,
-      productVariantURL,);
-    await sendMail(
-      subscriptionRecord.email,
-      product.title,
-      variant_title,
-      productVariantURL,
-    );
-    console.log("mail sent...");
+    for (const subscription of subscriptionRecord) {
+      await sendMail(
+        subscription.email,
+        product.title,
+        variant_title,
+        productVariantURL,
+      );
 
-    /**
-     * updating the record in subscriptions table, as notified = true
-     */
-    await prisma.subscription.update({
-      where: {
-        product_variant_unique: {
-          productId: String(product_id),
-          variantId: String(variant_id),
+      /**
+       * updating the record in subscriptions table, as notified = true
+       */
+      await prisma.subscription.update({
+        where: {
+          product_variant_email_shop_unique: {
+            productId: String(product_id),
+            variantId: String(variant_id),
+            shop: storeDetails?.name!,
+            email: subscription.email,
+          },
         },
-      },
-      data: {
-        notified: true,
-      },
-    });
+        data: {
+          notified: true,
+        },
+      });
+    };
 
     /**
      * returning response
